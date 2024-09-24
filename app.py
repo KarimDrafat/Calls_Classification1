@@ -35,13 +35,7 @@ generation_config = {
 model = genai.GenerativeModel(
     model_name="gemini-1.5-flash",
     generation_config=generation_config,
-    system_instruction=("You should analyze the Call Transcript column and classify it without giving any details. "
-                        "Please note that each row in the column is about a conversation "
-                        "between a customer and an agent where the customer is either trying "
-                        "to ask a question, buy, or complain while the agent provides help. "
-                        "So your job is to classify each row into the following list based on "
-                        "[\"Complaint\", \"Query\", \"Compliment\", "
-                        "\"late-Delivery\",\"Exchange\", \"Other\"] or if it is a combination of both, classify it with both classes as for example : Complaint/Query"),
+    system_instruction=("instructions"),
 )
 
 def detect_encoding(file_path):
