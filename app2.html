@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Classifier</title>
+</head>
+<body>
+    <h1>Upload MP3 File for Classification</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="mp3-file" accept=".mp3" required>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="result">
+        <h3>Result:</h3>
+        <p id="transcript"></p>
+        <p id="classification"></p>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('mp3-file');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const response = await fetch('http://localhost:8000/upload_mp3/', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('transcript').innerText = "Transcript: " + result.transcript;
+            document.getElementById('classification').innerText = "Classification: " + result.classification;
+        });
+    </script>
+</body>
+</html>
