@@ -1,59 +1,125 @@
-import os
-import whisper 
-import google.generativeai as genai
-import pandas as pd
-import chardet
-import time
-import shutil  # For moving files
-from google.api_core.exceptions import ResourceExhausted
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcribe and Classify Customer Service Calls</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .message {
+            margin-top: 20px;
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Transcribe and Classify Customer Service Calls</h1>
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" name="mp3_files" id="mp3_files" accept=".mp3" multiple>
+            <button type="submit">Upload and Process</button>
+        </form>
 
-# Configure the API key for the Generative AI service
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        <div id="result-table"></div>
+        <p class="message" id="success-message" style="display: none;">Transcripts and classifications have been added to the CSV file in the GitHub directory.</p>
+        <p class="error" id="error-message" style="display: none;"></p>
+    </div>
 
-# Create the classification model
-generation_config = {
-    "temperature": 0,
-    "top_p": 0,
-    "top_k": 64,
-    "max_output_tokens": 10092,
-    "response_mime_type": "text/plain",
-}
+    <script>
+        document.getElementById("upload-form").onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            const mp3Files = document.getElementById("mp3_files").files;
 
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
-    generation_config=generation_config,
-    system_instruction=("instructions"),
-)
+            for (const file of mp3Files) {
+                formData.append("mp3_files", file);
+            }
 
-# Create FastAPI app
-app = FastAPI()
+            try {
+                const response = await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                
+                const data = await response.json();
 
-# Mount the static directory for serving HTML and other static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+                if (response.ok) {
+                    // Generate a table to display transcripts and classifications
+                    let tableHTML = `<table>
+                                        <thead>
+                                            <tr>
+                                                <th>Call ID</th>
+                                                <th>Transcript</th>
+                                                <th>Classification</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                    
+                    data.results.forEach(row => {
+                        tableHTML += `<tr>
+                                        <td>${row.call_id}</td>
+                                        <td>${row.transcript}</td>
+                                        <td>${row.classification}</td>
+                                      </tr>`;
+                    });
 
-@app.get("/")
-async def read_index():
-    """Serve the main HTML file."""
-    return FileResponse("static/index.html")  # Path to your HTML file
-
-# Your other logic and endpoints go here
-# e.g., detect_encoding, transcribe_audio, classify_transcript, process_mp3_files_and_classify, etc.
-
-@app.post("/process")
-async def process_files(csv_file_name: str, mp3_folder_name: str):
-    """Endpoint to process MP3 files and classify them."""
-    csv_file_path = os.path.join(os.getcwd(), csv_file_name)
-    mp3_folder_path = os.path.join(os.getcwd(), mp3_folder_name)
-
-    # Check if CSV and MP3 folder exist
-    if not os.path.exists(csv_file_path):
-        raise HTTPException(status_code=404, detail=f"The CSV file {csv_file_path} does not exist.")
-    if not os.path.exists(mp3_folder_path):
-        raise HTTPException(status_code=404, detail=f"The MP3 folder {mp3_folder_path} does not exist.")
-
-    # Process the MP3 files and update the CSV
-    process_mp3_files_and_classify(csv_file_path, mp3_folder_path)
-    return {"message": "Processing complete!"}
+                    tableHTML += `</tbody></table>`;
+                    
+                    document.getElementById("result-table").innerHTML = tableHTML;
+                    document.getElementById("success-message").style.display = "block";
+                    document.getElementById("error-message").style.display = "none";
+                } else {
+                    throw new Error(data.detail || "An error occurred while processing the files.");
+                }
+            } catch (error) {
+                document.getElementById("success-message").style.display = "none";
+                document.getElementById("error-message").textContent = error.message;
+                document.getElementById("error-message").style.display = "block";
+            }
+        };
+    </script>
+</body>
+</html>
