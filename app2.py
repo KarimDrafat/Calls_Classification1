@@ -7,6 +7,8 @@ import time
 import shutil  # For moving files
 from google.api_core.exceptions import ResourceExhausted
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Configure the API key for the Generative AI service
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -28,6 +30,14 @@ model = genai.GenerativeModel(
 
 # Create FastAPI app
 app = FastAPI()
+
+# Mount the static directory for serving HTML and other static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def read_index():
+    """Serve the main HTML file."""
+    return FileResponse("static/index.html")  # Path to your HTML file
 
 def detect_encoding(file_path):
     """Detect the encoding of the file."""
