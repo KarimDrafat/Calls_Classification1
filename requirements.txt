@@ -4,5 +4,4 @@ pandas
 whisper
 google-generativeai
 chardet
-google.api_core.exceptions
 os
