@@ -4,4 +4,3 @@ pandas
 whisper
 google-generativeai
 chardet
-os
