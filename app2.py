@@ -1,12 +1,14 @@
 import os
-import whisper
+import whisper 
 import google.generativeai as genai
 import pandas as pd
 import chardet
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import FileResponse
+import time
+import shutil  # For moving files
+from google.api_core.exceptions import ResourceExhausted
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from typing import List
+from fastapi.responses import FileResponse
 
 # Configure the API key for the Generative AI service
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
@@ -16,7 +18,7 @@ generation_config = {
     "temperature": 0,
     "top_p": 0,
     "top_k": 64,
-    "max_output_tokens": 10092,  # Adjusted token limit
+    "max_output_tokens": 10092,
     "response_mime_type": "text/plain",
 }
 
@@ -26,72 +28,32 @@ model = genai.GenerativeModel(
     system_instruction=("instructions"),
 )
 
+# Create FastAPI app
 app = FastAPI()
 
-# Mount the static directory for serving the HTML
+# Mount the static directory for serving HTML and other static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
-def read_root():
-    return FileResponse("static/index.html")
+async def read_index():
+    """Serve the main HTML file."""
+    return FileResponse("static/index.html")  # Path to your HTML file
 
-def transcribe_audio(mp3_file_path):
-    """Transcribe the MP3 file to text using Whisper."""
-    try:
-        model = whisper.load_model("tiny")
-        result = model.transcribe(mp3_file_path)
-        return result["text"]
-    except Exception as e:
-        print(f"Error transcribing audio: {e}")
-        return None
-
-def classify_transcript(transcript):
-    """Classify the transcript using Generative AI."""
-    try:
-        chat_session = model.start_chat()
-        response = chat_session.send_message(transcript)
-        return response.text
-    except Exception as e:
-        print(f"Error classifying transcript: {e}")
-        return "Error"
+# Your other logic and endpoints go here
+# e.g., detect_encoding, transcribe_audio, classify_transcript, process_mp3_files_and_classify, etc.
 
 @app.post("/process")
-async def process_files(mp3_files: List[UploadFile] = File(...)):
-    results = []
-    for mp3_file in mp3_files:
-        call_id = os.path.splitext(mp3_file.filename)[0]
-        file_path = f"temp/{mp3_file.filename}"
-        
-        # Save uploaded MP3 file to the server
-        with open(file_path, "wb") as f:
-            f.write(await mp3_file.read())
-        
-        # Transcribe the MP3 file
-        transcript = transcribe_audio(file_path)
-        if not transcript:
-            return HTTPException(status_code=500, detail=f"Failed to transcribe {mp3_file.filename}")
+async def process_files(csv_file_name: str, mp3_folder_name: str):
+    """Endpoint to process MP3 files and classify them."""
+    csv_file_path = os.path.join(os.getcwd(), csv_file_name)
+    mp3_folder_path = os.path.join(os.getcwd(), mp3_folder_name)
 
-        # Classify the transcript
-        classification = classify_transcript(transcript)
+    # Check if CSV and MP3 folder exist
+    if not os.path.exists(csv_file_path):
+        raise HTTPException(status_code=404, detail=f"The CSV file {csv_file_path} does not exist.")
+    if not os.path.exists(mp3_folder_path):
+        raise HTTPException(status_code=404, detail=f"The MP3 folder {mp3_folder_path} does not exist.")
 
-        # Add results to the list
-        results.append({
-            "call_id": call_id,
-            "transcript": transcript,
-            "classification": classification
-        })
-
-        # Update CSV file
-        csv_file = "transcripts.csv"
-        try:
-            if os.path.exists(csv_file):
-                df = pd.read_csv(csv_file)
-            else:
-                df = pd.DataFrame(columns=["Call ID", "Transcript", "Classification"])
-
-            df = df.append({"Call ID": call_id, "Transcript": transcript, "Classification": classification}, ignore_index=True)
-            df.to_csv(csv_file, index=False)
-        except Exception as e:
-            return HTTPException(status_code=500, detail=f"Error updating CSV file: {e}")
-
-    return {"results": results}
+    # Process the MP3 files and update the CSV
+    process_mp3_files_and_classify(csv_file_path, mp3_folder_path)
+    return {"message": "Processing complete!"}
