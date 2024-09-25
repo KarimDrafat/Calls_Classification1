@@ -115,7 +115,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    messageDiv.innerText = "Transcripts and classifications have been added into the CSV file in the GitHub directory.";
+                    messageDiv.innerText = "Processing complete!";
                     displayResults(data.results);
                 } else {
                     messageDiv.innerText = data.detail || "An error occurred during processing.";
