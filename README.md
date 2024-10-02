@@ -14,7 +14,7 @@ import pandas as pd
 import chardet
 import time
 import shutil
-from google.api_core.exceptions import ResourceExhausted
+from google.api_core.exceptions import ResourceExhausted```
 
 os: For file and environment variable operations.
 whisper: To transcribe audio files.
