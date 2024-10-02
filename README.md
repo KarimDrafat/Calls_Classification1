@@ -15,19 +15,13 @@ import chardet
 import time
 import shutil
 from google.api_core.exceptions import ResourceExhausted
-stop code here
 ```
-Explanation of Libraries:
 
-    os: For file and environment variable operations.
-    whisper: To transcribe audio files.
-    google.generativeai: To use Google's Generative AI models.
-    pandas: For reading and updating CSV files.
-    chardet: For detecting file encodings.
-    time: For handling delays in case of API retries.
-    shutil: To move files after processing.
-    ResourceExhausted: Handles exceptions for quota limits from the Google API.
-
-
-This structure clearly separates each section and adds the explanation after the code block.
-
+os: For file and environment variable operations.
+whisper: To transcribe audio files.
+google.generativeai: To use Google's Generative AI models.
+pandas: For reading and updating CSV files.
+chardet: For detecting file encodings.
+time: For handling delays in case of API retries.
+shutil: To move files after processing.
+ResourceExhausted: Handles exceptions for quota limits from the Google API.
