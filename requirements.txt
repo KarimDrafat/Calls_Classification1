@@ -1,6 +1,5 @@
-fastapi
-uvicorn
-pandas
+flask
 whisper
 google-generativeai
+pandas
 chardet
