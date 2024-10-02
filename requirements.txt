@@ -3,4 +3,4 @@ whisper
 google-generativeai
 pandas
 chardet
-uvicorn
+gunicorn
