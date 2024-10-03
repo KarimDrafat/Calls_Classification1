@@ -1,5 +1,4 @@
-# Project Title
-### Audio Transcription and Classification System Using AI
+# Audio Transcription and Classification System Using AI
 
 ## Description
 This project implements an Audio Transcription and Classification System that automates the conversion of audio calls into text and categorizes the content using advanced AI technologies. By integrating Whisper for transcription and API from Google Generative AI for classification , the system enhances operational efficiency within organizations that rely on audio data, such as customer service and sales departments.
